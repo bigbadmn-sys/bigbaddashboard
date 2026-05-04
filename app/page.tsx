@@ -39,6 +39,50 @@ function commandToEndpoint(command: string): { endpoint: string; method: "GET" |
   return { endpoint: `/api/${endpoint}`, method };
 }
 
+function formatChicagoWallClock(now: Date): string {
+  const dtf = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Chicago",
+    hour12: false,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit"
+  });
+
+  const parts = Object.fromEntries(dtf.formatToParts(now).map((p) => [p.type, p.value]));
+
+  // Infer whether Chicago is currently observing DST (CDT) vs standard time (CST)
+  const year = Number(parts.year);
+  const jan = new Date(Date.UTC(year, 0, 15, 12, 0, 0));
+  const jul = new Date(Date.UTC(year, 6, 15, 12, 0, 0));
+  const stdOffsetMinutes = Math.min(offsetMinutesForChicago(jan), offsetMinutesForChicago(jul));
+  const nowOffsetMinutes = offsetMinutesForChicago(now);
+  const isDst = nowOffsetMinutes !== stdOffsetMinutes;
+  const tzLabel = isDst ? "CDT" : "CST";
+
+  return `${parts.year}.${parts.month}.${parts.day} // ${parts.hour}:${parts.minute}:${parts.second} ${tzLabel}`;
+}
+
+function offsetMinutesForChicago(date: Date): number {
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Chicago",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false
+  });
+
+  const p = Object.fromEntries(formatter.formatToParts(date).map((part) => [part.type, part.value]));
+  const asUTC = new Date(`${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}:${p.second}Z`);
+
+  return (date.getTime() - asUTC.getTime()) / 60000;
+}
+
 export default function HomePage() {
   const [projects, setProjects] = useState<ProjectData[]>([]);
   const [output, setOutput] = useState("Run /status to load project data.");
@@ -48,15 +92,7 @@ export default function HomePage() {
 
   useEffect(() => {
     const updateClock = () => {
-      const now = new Date();
-      const pad = (n: number) => String(n).padStart(2, '0');
-      const y = now.getFullYear();
-      const mo = pad(now.getMonth() + 1);
-      const d = pad(now.getDate());
-      const h = pad(now.getHours());
-      const m = pad(now.getMinutes());
-      const s = pad(now.getSeconds());
-      setTimeStr(`${y}.${mo}.${d} // ${h}:${m}:${s} CDT`);
+      setTimeStr(formatChicagoWallClock(new Date()));
     };
     updateClock();
     const interval = setInterval(updateClock, 1000);
@@ -102,12 +138,26 @@ export default function HomePage() {
           <span className="font-mono font-black text-primary tracking-widest text-base">BBOS</span>
           <div className="hidden md:flex items-center gap-1 text-bbos-subtext font-mono text-[10px] tracking-wider">
             <span className="material-symbols-outlined text-[12px]">schedule</span>
-            <span>{timeStr || "2026.05.04 // --:--:-- CDT"}</span>
+            <span>{timeStr || "----.--.-- // --:--:-- --"}</span>
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <button className="px-3 py-1 border border-primary text-primary font-mono text-xs font-bold hover:bg-primary/10 transition-colors">SYNC</button>
-          <button className="px-3 py-1 bg-amber text-bbos-bg font-mono text-xs font-bold hover:brightness-110 transition-all">UPDATE</button>
+          <button
+            type="button"
+            disabled={isRunning}
+            onClick={() => void runCommand("/sync")}
+            className="px-3 py-1 border border-primary text-primary font-mono text-xs font-bold hover:bg-primary/10 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            SYNC
+          </button>
+          <button
+            type="button"
+            disabled={isRunning}
+            onClick={() => void runCommand("/update")}
+            className="px-3 py-1 bg-amber text-bbos-bg font-mono text-xs font-bold hover:brightness-110 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            UPDATE
+          </button>
         </div>
       </header>
 
@@ -147,7 +197,12 @@ export default function HomePage() {
           <button onClick={() => void runCommand("/status")} className="cmd-link text-bbos-subtext hover:text-primary transition-colors">/STATUS</button>
           <button onClick={() => void runCommand("/next")} className="cmd-link text-bbos-subtext hover:text-primary transition-colors">/NEXT</button>
           <button onClick={() => void runCommand("/priority")} className="cmd-link text-bbos-subtext hover:text-primary transition-colors">/PRIORITY</button>
-          <button onClick={() => void runCommand("/capture")} className="cmd-link text-bbos-subtext hover:text-primary transition-colors">/CAPTURE</button>
+          <button
+            onClick={() => void runCommand("/capture Quick capture from footer")}
+            className="cmd-link text-bbos-subtext hover:text-primary transition-colors"
+          >
+            /CAPTURE
+          </button>
           <button onClick={() => void runCommand("/sync")} className="cmd-link text-bbos-subtext hover:text-primary transition-colors">/SYNC</button>
           <button onClick={() => void runCommand("/update")} className="cmd-link active text-amber transition-colors">/UPDATE</button>
         </div>
