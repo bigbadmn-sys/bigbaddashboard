@@ -100,6 +100,14 @@ export default function HomePage() {
   }, []);
 
   async function runCommand(command: string) {
+    const trimmed = command.trim();
+    if (/^\/update(\s|$)/i.test(trimmed)) {
+      const ok = window.confirm(
+        "Run /update? This will git add, commit, and push in BBOS_CONTEXT_PATH (bbos-context)."
+      );
+      if (!ok) return;
+    }
+
     setIsRunning(true);
     try {
       setErrorMessage(null);
