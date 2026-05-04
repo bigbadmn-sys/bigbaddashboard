@@ -4,6 +4,7 @@
   "private": true,
   "description": "BBOS Dashboard Phase 1",
   "scripts": {
+    "clean": "rm -rf .next",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
