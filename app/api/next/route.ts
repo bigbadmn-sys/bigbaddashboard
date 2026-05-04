@@ -11,7 +11,7 @@ export async function GET() {
     const payload: CommandResult<typeof nextActions> = {
       command: "/next",
       success: true,
-      message: `Found ${nextActions.length} pending next action(s).`,
+      message: `Found ${nextActions.length} pending next action(s). Sort: status (Active→Paused→Blocked) → phase (Execute→…→Operate) → Last Updated (newer first) → path; checklist order within each file unchanged.`,
       data: nextActions
     };
 

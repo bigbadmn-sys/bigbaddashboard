@@ -3,6 +3,61 @@ import path from "path";
 import os from "os";
 import { ProjectData } from "@/lib/types";
 
+/** Lower = earlier in queue. Active work before paused/blocked. */
+const STATUS_RANK: Record<string, number> = {
+  Active: 0,
+  Paused: 1,
+  Blocked: 2,
+  Unknown: 3
+};
+
+/** Lower = earlier. Execute beats planning/ops for “what do I do now”. */
+const PHASE_RANK: Record<string, number> = {
+  Execute: 0,
+  Plan: 1,
+  Iterate: 2,
+  Operate: 3,
+  Unknown: 4
+};
+
+function statusRank(status: string): number {
+  return STATUS_RANK[status] ?? STATUS_RANK.Unknown;
+}
+
+function phaseRank(phase: string): number {
+  return PHASE_RANK[phase] ?? PHASE_RANK.Unknown;
+}
+
+/** Parse YYYY-MM-DD from Last Updated line; 0 if missing/invalid. */
+function lastUpdatedSortKey(lastUpdated: string): number {
+  const match = lastUpdated.match(/(\d{4})-(\d{2})-(\d{2})/);
+  if (!match) return 0;
+  return Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+}
+
+/**
+ * Stable ordering for `/next` and `/priority`:
+ * 1. Status: Active → Paused → Blocked → (other)
+ * 2. Phase: Execute → Plan → Iterate → Operate → (other)
+ * 3. Last Updated: newer first (ties broken by path)
+ * 4. sourceFile: ascending (deterministic across machines)
+ */
+export function sortProjectsForNextQueue(projects: ProjectData[]): ProjectData[] {
+  return [...projects].sort((a, b) => {
+    const byStatus = statusRank(a.status) - statusRank(b.status);
+    if (byStatus !== 0) return byStatus;
+
+    const byPhase = phaseRank(a.phase) - phaseRank(b.phase);
+    if (byPhase !== 0) return byPhase;
+
+    const aTime = lastUpdatedSortKey(a.lastUpdated);
+    const bTime = lastUpdatedSortKey(b.lastUpdated);
+    if (bTime !== aTime) return bTime - aTime;
+
+    return a.sourceFile.localeCompare(b.sourceFile, "en");
+  });
+}
+
 function normalizePath(inputPath: string): string {
   if (inputPath.startsWith("~/")) {
     return path.join(os.homedir(), inputPath.slice(2));
@@ -93,8 +148,9 @@ export async function loadProjects(): Promise<ProjectData[]> {
 
 export function getNextActions(projects: ProjectData[]): { project: string; action: string }[] {
   const actions: { project: string; action: string }[] = [];
+  const ordered = sortProjectsForNextQueue(projects);
 
-  for (const project of projects) {
+  for (const project of ordered) {
     for (const item of project.nextSteps) {
       if (!item.completed) {
         actions.push({ project: project.name, action: item.text });
