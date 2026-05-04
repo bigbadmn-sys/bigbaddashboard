@@ -12,6 +12,7 @@ type CommandApiResponse = {
   success: boolean;
   message: string;
   data?: unknown;
+  meta?: unknown;
 };
 
 const AGENTS = [
