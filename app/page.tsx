@@ -1,0 +1,157 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import AgentPanel from "@/components/AgentPanel";
+import CommandBar from "@/components/CommandBar";
+import OutputPanel from "@/components/OutputPanel";
+import ProjectCard from "@/components/ProjectCard";
+import { ProjectData } from "@/lib/types";
+
+type CommandApiResponse = {
+  command: string;
+  success: boolean;
+  message: string;
+  data?: unknown;
+};
+
+const AGENTS = [
+  { name: "Claude", online: true },
+  { name: "Cursor", online: true },
+  { name: "Gemini", online: false },
+  { name: "Antigravity", online: false },
+  { name: "Qwen Local", online: false }
+];
+
+function commandToEndpoint(command: string): { endpoint: string; method: "GET" | "POST"; body?: unknown } {
+  const [name, ...args] = command.trim().split(" ");
+  const normalized = name.toLowerCase();
+
+  if (normalized === "/capture") {
+    return {
+      endpoint: "/api/capture",
+      method: "POST",
+      body: { text: args.join(" ").trim() }
+    };
+  }
+
+  const endpoint = normalized.replace(/^\//, "");
+  const method = normalized === "/sync" || normalized === "/update" ? "POST" : "GET";
+  return { endpoint: `/api/${endpoint}`, method };
+}
+
+export default function HomePage() {
+  const [projects, setProjects] = useState<ProjectData[]>([]);
+  const [output, setOutput] = useState("Run /status to load project data.");
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isRunning, setIsRunning] = useState(false);
+  const [timeStr, setTimeStr] = useState("");
+
+  useEffect(() => {
+    const updateClock = () => {
+      const now = new Date();
+      const pad = (n: number) => String(n).padStart(2, '0');
+      const y = now.getFullYear();
+      const mo = pad(now.getMonth() + 1);
+      const d = pad(now.getDate());
+      const h = pad(now.getHours());
+      const m = pad(now.getMinutes());
+      const s = pad(now.getSeconds());
+      setTimeStr(`${y}.${mo}.${d} // ${h}:${m}:${s} CDT`);
+    };
+    updateClock();
+    const interval = setInterval(updateClock, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
+  async function runCommand(command: string) {
+    setIsRunning(true);
+    try {
+      setErrorMessage(null);
+      const { endpoint, method, body } = commandToEndpoint(command);
+      const response = await fetch(endpoint, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: body ? JSON.stringify(body) : undefined
+      });
+
+      const result = (await response.json()) as CommandApiResponse;
+
+      if (command.startsWith("/status") && result.success && Array.isArray(result.data)) {
+        setProjects(result.data as ProjectData[]);
+      }
+
+      if (!response.ok || !result.success) {
+        setErrorMessage(result.message || "Unknown error");
+      }
+      setOutput(JSON.stringify(result, null, 2));
+    } catch (error) {
+      setErrorMessage(String(error));
+      setOutput(JSON.stringify({ command, success: false, message: String(error) }, null, 2));
+    } finally {
+      setIsRunning(false);
+    }
+  }
+
+  return (
+    <div className="bg-bbos-bg text-bbos-text font-sans overflow-hidden h-screen flex flex-col select-none relative">
+      <div className="scanline-sweep"></div>
+      
+      {/* ZONE 1: Top Bar */}
+      <header className="bg-bbos-surface border-b border-bbos-border flex items-center justify-between px-4 h-11 z-50 shrink-0">
+        <div className="flex items-center gap-6">
+          <span className="font-mono font-black text-primary tracking-widest text-base">BBOS</span>
+          <div className="hidden md:flex items-center gap-1 text-bbos-subtext font-mono text-[10px] tracking-wider">
+            <span className="material-symbols-outlined text-[12px]">schedule</span>
+            <span>{timeStr || "2026.05.04 // --:--:-- CDT"}</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <button className="px-3 py-1 border border-primary text-primary font-mono text-xs font-bold hover:bg-primary/10 transition-colors">SYNC</button>
+          <button className="px-3 py-1 bg-amber text-bbos-bg font-mono text-xs font-bold hover:brightness-110 transition-all">UPDATE</button>
+        </div>
+      </header>
+
+      <div className="flex flex-1 overflow-hidden">
+        {/* ZONE 2: Agent Sidebar */}
+        <AgentPanel agents={AGENTS} />
+
+        {/* ZONE 3 + 4: Main Content */}
+        <main className="flex-1 flex flex-col overflow-hidden bg-bbos-bg relative z-40">
+          
+          {/* Zone 3: Project Cards */}
+          <div className="flex-1 p-4 overflow-y-auto">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+              {projects.length === 0 ? (
+                <div className="border border-bbos-border bg-bbos-panel p-4 text-sm text-bbos-subtext font-mono uppercase col-span-full">
+                  No projects loaded. Run /status.
+                </div>
+              ) : (
+                projects.map((project) => <ProjectCard key={project.sourceFile} project={project} />)
+              )}
+            </div>
+          </div>
+
+          {/* Zone 4: Bottom Split Panel */}
+          <div className="h-44 border-t border-bbos-border flex shrink-0">
+            <OutputPanel output={output} errorMessage={errorMessage} />
+            <CommandBar onRun={runCommand} isRunning={isRunning} />
+          </div>
+
+        </main>
+      </div>
+
+      {/* Footer / Command Bar */}
+      <footer className="h-9 flex items-center justify-between px-4 bg-bbos-surface border-t border-bbos-border font-mono text-[10px] uppercase tracking-widest shrink-0 z-50">
+        <div className="text-bbos-dim">BBOS TERMINAL V1.0.4</div>
+        <div className="flex gap-5 items-center">
+          <button onClick={() => void runCommand("/status")} className="cmd-link text-bbos-subtext hover:text-primary transition-colors">/STATUS</button>
+          <button onClick={() => void runCommand("/next")} className="cmd-link text-bbos-subtext hover:text-primary transition-colors">/NEXT</button>
+          <button onClick={() => void runCommand("/priority")} className="cmd-link text-bbos-subtext hover:text-primary transition-colors">/PRIORITY</button>
+          <button onClick={() => void runCommand("/capture")} className="cmd-link text-bbos-subtext hover:text-primary transition-colors">/CAPTURE</button>
+          <button onClick={() => void runCommand("/sync")} className="cmd-link text-bbos-subtext hover:text-primary transition-colors">/SYNC</button>
+          <button onClick={() => void runCommand("/update")} className="cmd-link active text-amber transition-colors">/UPDATE</button>
+        </div>
+      </footer>
+    </div>
+  );
+}
