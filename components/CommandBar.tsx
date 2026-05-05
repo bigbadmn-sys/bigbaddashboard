@@ -29,7 +29,7 @@ export default function CommandBar({ onRun, isRunning = false }: CommandBarProps
             onChange={(event) => setCommand(event.target.value)}
             placeholder="enter command..."
             disabled={isRunning}
-            className="w-full h-10 bg-bbos-surface border border-bbos-border pl-8 pr-3 font-mono text-xs text-amber transition-colors focus:border-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/25"
+            className="w-full h-10 bg-bbos-surface border border-bbos-border pl-8 pr-3 font-mono text-xs text-amber placeholder:text-bbos-muted caret-amber transition-colors focus:border-amber focus:outline-none focus-visible:ring-1 focus-visible:ring-amber/40 shadow-inner"
           />
         </div>
         <button
