@@ -26,7 +26,7 @@ export default function OutputPanel({ output, errorMessage }: OutputPanelProps) 
         <div className="flex gap-3">
           <span className="text-bbos-dim shrink-0">[{timeStr || "00:00:00"}]</span>
           {errorMessage ? (
-            <span className="whitespace-pre-wrap break-all text-[#ff4444]">ERROR: {errorMessage}</span>
+            <span className="whitespace-pre-wrap break-all text-danger">ERROR: {errorMessage}</span>
           ) : (
             <span className="text-primary whitespace-pre-wrap break-all">{output}</span>
           )}

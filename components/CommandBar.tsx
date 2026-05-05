@@ -17,7 +17,7 @@ export default function CommandBar({ onRun, isRunning = false }: CommandBarProps
   };
 
   return (
-    <div className="w-72 shrink-0 flex flex-col">
+    <div className="w-full sm:w-72 shrink-0 flex flex-col">
       <div className="bg-bbos-surface px-4 py-1.5 border-b border-bbos-border shrink-0">
         <span className="font-mono text-[10px] text-bbos-subtext uppercase tracking-widest">COMMAND_INPUT</span>
       </div>
@@ -29,13 +29,13 @@ export default function CommandBar({ onRun, isRunning = false }: CommandBarProps
             onChange={(event) => setCommand(event.target.value)}
             placeholder="enter command..."
             disabled={isRunning}
-            className="w-full h-10 bg-bbos-surface border border-bbos-border pl-8 pr-3 font-mono text-xs text-amber focus:border-primary focus:outline-none transition-colors"
+            className="w-full h-10 bg-bbos-surface border border-bbos-border pl-8 pr-3 font-mono text-xs text-amber transition-colors focus:border-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/25"
           />
         </div>
         <button
           type="submit"
           disabled={isRunning}
-          className="bg-amber text-bbos-bg h-9 font-mono text-xs font-bold hover:brightness-110 active:brightness-90 transition-all flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed w-full"
+          className="bg-amber text-bbos-bg h-9 font-mono text-xs font-bold hover:brightness-110 active:brightness-90 transition-all flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber/40"
         >
           <span className="material-symbols-outlined text-[15px]">terminal</span>
           {isRunning ? "PROCESSING..." : "RUN_COMMAND"}

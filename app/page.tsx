@@ -170,7 +170,7 @@ export default function HomePage() {
             type="button"
             disabled={isRunning}
             onClick={() => void runCommand("/sync")}
-            className="px-3 py-1 border border-primary text-primary font-mono text-xs font-bold hover:bg-primary/10 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            className="px-3 py-1 border border-primary text-primary font-mono text-xs font-bold hover:bg-primary/10 transition-colors disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/25"
           >
             SYNC
           </button>
@@ -178,7 +178,7 @@ export default function HomePage() {
             type="button"
             disabled={isRunning}
             onClick={() => void runCommand("/update")}
-            className="px-3 py-1 bg-amber text-bbos-bg font-mono text-xs font-bold hover:brightness-110 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+            className="px-3 py-1 bg-amber text-bbos-bg font-mono text-xs font-bold hover:brightness-110 transition-all disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber/40"
           >
             UPDATE
           </button>
@@ -206,7 +206,7 @@ export default function HomePage() {
           </div>
 
           {/* Zone 4: Bottom Split Panel */}
-          <div className="h-44 border-t border-bbos-border flex shrink-0">
+          <div className="h-44 border-t border-bbos-border flex shrink-0 flex-col sm:flex-row">
             <OutputPanel output={output} errorMessage={errorMessage} />
             <CommandBar onRun={runCommand} isRunning={isRunning} />
           </div>

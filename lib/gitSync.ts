@@ -10,7 +10,10 @@ async function runGit(args: string[]): Promise<{ stdout: string; stderr: string 
 }
 
 export async function syncContext(): Promise<string> {
-  const result = await runGit(["pull"]);
+  // `/capture` commonly changes `inbox.md`, which can make a plain `git pull`
+  // fail with "local changes would be overwritten". Autostash keeps `/sync`
+  // usable without forcing users to run `/update` first.
+  const result = await runGit(["pull", "--rebase", "--autostash"]);
   return (result.stdout || result.stderr || "git pull completed").trim();
 }
 
