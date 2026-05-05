@@ -15,6 +15,8 @@ type CommandApiResponse = {
   meta?: unknown;
 };
 
+const KNOWN_COMMANDS = new Set(["/status", "/next", "/priority", "/capture", "/sync", "/update"]);
+
 const AGENTS = [
   { name: "Claude", online: true },
   { name: "Cursor", online: true },
@@ -102,6 +104,19 @@ export default function HomePage() {
 
   async function runCommand(command: string) {
     const trimmed = command.trim();
+    const cmdName = trimmed.split(/\s+/)[0]?.toLowerCase() ?? "";
+
+    if (!KNOWN_COMMANDS.has(cmdName)) {
+      const payload: CommandApiResponse = {
+        command: cmdName || "(empty)",
+        success: false,
+        message: cmdName ? `Unknown command: ${cmdName}` : "No command provided."
+      };
+      setErrorMessage(payload.message);
+      setOutput(JSON.stringify(payload, null, 2));
+      return;
+    }
+
     if (/^\/update(\s|$)/i.test(trimmed)) {
       const ok = window.confirm(
         "Run /update? This will git add, commit, and push in BBOS_CONTEXT_PATH (bbos-context)."
@@ -121,7 +136,7 @@ export default function HomePage() {
 
       const result = (await response.json()) as CommandApiResponse;
 
-      if (command.startsWith("/status") && result.success && Array.isArray(result.data)) {
+      if (/^\/status(\s|$)/i.test(trimmed) && result.success && Array.isArray(result.data)) {
         setProjects(result.data as ProjectData[]);
       }
 
