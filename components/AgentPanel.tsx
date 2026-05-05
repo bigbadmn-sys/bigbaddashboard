@@ -18,8 +18,8 @@ export default function AgentPanel({ agents }: AgentPanelProps) {
         {agents.map((agent) => {
           const isActive = agent.name === "Claude";
           const wrapperClass = agent.online
-            ? `border-l-2 border-primary px-3 py-2.5 flex items-center justify-between cursor-pointer ${isActive ? 'bg-primary/10' : 'hover:bg-bbos-panel transition-colors'}`
-            : "border-l-2 border-transparent px-3 py-2.5 flex items-center justify-between cursor-pointer hover:bg-bbos-panel transition-colors";
+            ? `border-l-2 border-primary px-3 py-2.5 flex items-center justify-between cursor-pointer transition-all duration-200 ${isActive ? 'bg-primary/10' : 'hover:bg-bbos-panel hover:pl-4'}`
+            : "border-l-2 border-transparent px-3 py-2.5 flex items-center justify-between cursor-pointer transition-all duration-200 hover:bg-bbos-panel hover:pl-4 hover:border-bbos-border";
             
           const dotClass = agent.online ? "bg-green" : "bg-bbos-muted";
           const textClass = agent.online ? "text-primary" : "text-bbos-dim";
