@@ -22,13 +22,13 @@ export default function OutputPanel({ output, errorMessage }: OutputPanelProps) 
           <span className="w-2 h-2 bg-bbos-border block"></span>
         </div>
       </div>
-      <div className="flex-1 p-3 font-mono text-[12px] text-primary/80 overflow-y-auto bg-bbos-bg/80 space-y-1">
-        <div className="flex gap-3">
-          <span className="text-bbos-dim shrink-0">[{timeStr || "00:00:00"}]</span>
+      <div className="flex-1 p-4 pb-8 font-mono text-[12px] text-primary/80 overflow-y-auto bg-bbos-bg/80 space-y-2">
+        <div className="flex gap-3 items-start">
+          <span className="text-bbos-dim shrink-0 mt-0.5">[{timeStr || "00:00:00"}]</span>
           {errorMessage ? (
-            <span className="whitespace-pre-wrap break-all text-danger">ERROR: {errorMessage}</span>
+            <span className="whitespace-pre-wrap break-words text-danger font-semibold bg-danger/10 px-2 py-0.5 rounded border border-danger/20 leading-relaxed w-full">ERROR: {errorMessage}</span>
           ) : (
-            <span className="text-primary whitespace-pre-wrap break-all">{output}</span>
+            <span className="text-primary whitespace-pre-wrap break-words leading-relaxed">{output}</span>
           )}
         </div>
         <div className="flex items-center gap-0 mt-2">
