@@ -11,12 +11,35 @@ async function runGit(args: string[]): Promise<{ stdout: string; stderr: string 
 
 export async function syncContext(): Promise<string> {
   // `/capture` commonly changes `inbox.md`, which can make a plain `git pull`
-  // fail with "local changes would be overwritten". Autostash keeps `/sync`
-  // usable without forcing users to run `/update` first.
-  // Be explicit about remote/branch to avoid edge cases where git thinks the
-  // branch has multiple upstreams ("Cannot rebase onto multiple branches.").
-  const result = await runGit(["pull", "--rebase", "--autostash", "origin", "main"]);
-  return (result.stdout || result.stderr || "git pull completed").trim();
+  // fail with "local changes would be overwritten". We do our own minimal
+  // stash/unstash and use `--ff-only` to avoid flaky rebase edge cases.
+  const status = await runGit(["status", "--porcelain"]);
+  const hasLocalChanges = Boolean((status.stdout || "").trim());
+
+  let stashed = false;
+  let pullOut = "";
+  let popOut = "";
+
+  try {
+    if (hasLocalChanges) {
+      const stashResult = await runGit(["stash", "push", "-u", "-m", "bbos-dashboard: /sync autostash"]);
+      stashed = !/no local changes/i.test(`${stashResult.stdout} ${stashResult.stderr}`);
+    }
+
+    const pullResult = await runGit(["pull", "--ff-only", "origin", "main"]);
+    pullOut = (pullResult.stdout || pullResult.stderr || "git pull completed").trim();
+  } finally {
+    if (stashed) {
+      try {
+        const popResult = await runGit(["stash", "pop"]);
+        popOut = (popResult.stdout || popResult.stderr || "").trim();
+      } catch (error) {
+        popOut = `stash pop failed: ${String(error)}`;
+      }
+    }
+  }
+
+  return [pullOut, popOut].filter(Boolean).join("\n").trim();
 }
 
 export async function updateContext(message?: string): Promise<string> {
