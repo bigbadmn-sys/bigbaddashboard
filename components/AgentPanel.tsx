@@ -9,7 +9,7 @@ interface AgentPanelProps {
 
 export default function AgentPanel({ agents }: AgentPanelProps) {
   return (
-    <nav className="w-44 shrink-0 flex flex-col bg-bbos-surface border-r border-bbos-border font-mono text-[10px] uppercase tracking-widest z-40">
+    <nav className="hidden sm:flex w-44 shrink-0 flex-col bg-bbos-surface border-r border-bbos-border font-mono text-[10px] uppercase tracking-widest z-40">
       <div className="px-4 py-3 border-b border-bbos-border">
         <div className="text-primary font-bold mb-0.5">AGENT ROSTER</div>
         <div className="text-bbos-dim text-[9px]">OPERATIONAL STATUS</div>
