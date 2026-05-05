@@ -13,7 +13,9 @@ export async function syncContext(): Promise<string> {
   // `/capture` commonly changes `inbox.md`, which can make a plain `git pull`
   // fail with "local changes would be overwritten". Autostash keeps `/sync`
   // usable without forcing users to run `/update` first.
-  const result = await runGit(["pull", "--rebase", "--autostash"]);
+  // Be explicit about remote/branch to avoid edge cases where git thinks the
+  // branch has multiple upstreams ("Cannot rebase onto multiple branches.").
+  const result = await runGit(["pull", "--rebase", "--autostash", "origin", "main"]);
   return (result.stdout || result.stderr || "git pull completed").trim();
 }
 
